@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Examen PAT - Full Control</title>
+    <script src="preguntas.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50; --accent: #3498db; --success: #27ae60;
+            --error: #e74c3c; --blank: #95a5a6; --bg: #f4f7f6;
+            --header-height: 240px; 
+        }
+
+        /* Configuración de scroll para evitar saltos del navegador */
+        html { 
+            scroll-behavior: smooth; 
+            scroll-restoration: manual; 
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding-top: var(--header-height); 
+            color: #333;
+        }
+
+        /* Cabecera Fija */
+        .header-fixed {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 2000; padding: 15px 0;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+        .nav-grid {
+            display: grid; grid-template-columns: repeat(15, 1fr);
+            gap: 6px; margin-bottom: 15px;
+        }
+
+        .nav-item {
+            height: 35px; background: #eee; display: flex; align-items: center;
+            justify-content: center; border-radius: 4px; cursor: pointer;
+            font-weight: bold; color: var(--primary); transition: 0.2s;
+        }
+
+        .nav-correct { background: var(--success) !important; color: white !important; }
+        .nav-wrong { background: var(--error) !important; color: white !important; }
+        .nav-blank { background: var(--blank) !important; color: white !important; }
+
+        .info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid #eee; padding-top: 10px;
+        }
+
+        .timer { font-family: monospace; font-size: 1.6em; color: var(--accent); font-weight: bold; }
+        
+        /* Preguntas */
+        .question-card {
+            background: white; margin-bottom: 25px; padding: 25px;
+            border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--primary);
+            scroll-margin-top: var(--header-height); /* Clave para el salto de navegación */
+        }
+
+        .option-label {
+            display: flex; align-items: center; padding: 12px;
+            border: 2px solid #edeff0; border-radius: 8px;
+            cursor: pointer; margin-bottom: 8px; transition: 0.2s;
+        }
+
+        .option-label:hover { background: #f0f7ff; }
+        .border-correct { border-color: var(--success) !important; background: #ebfaef !important; }
+        .border-wrong { border-color: var(--error) !important; background: #fdf2f2 !important; }
+
+        .explanation {
+            margin-top: 15px; padding: 15px; background: #eef7fe;
+            border-radius: 6px; display: none; border-left: 4px solid var(--accent);
+        }
+
+        .btn-main {
+            width: 100%; padding: 15px; background: var(--success);
+            color: white; border: none; border-radius: 8px;
+            font-size: 1.2em; font-weight: bold; cursor: pointer; margin-bottom: 50px;
+        }
+
+        .btn-restart { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-up { background: #eee; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-size: 0.8em; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header-fixed" id="mainHeader">
+    <div class="container">
+        <div class="nav-grid" id="navGrid"></div>
+        <div class="info-bar">
+            <div id="statusLabel" style="font-weight: bold;">Cargando examen...</div>
+            <div class="timer" id="timerDisplay">00:00</div>
+            <button class="btn-restart" onclick="reiniciar()">Reiniciar</button>
+        </div>
+        <div id="statsDetalle" style="margin-top:5px; color: var(--accent); font-weight: bold;"></div>
+    </div>
+</div>
+
+<div class="container">
+    <div id="quizBody"></div>
+    <button id="btnValidar" class="btn-main" onclick="validarExamen()">Validar Respuestas</button>
+</div>
+
+<script>
+    let seleccion = [];
+    let crono;
+    let segundos = 0;
+    let finalizado = false;
+
+    // INICIAR EL TEST
+    function iniciarTest() {
+        finalizado = false;
+        segundos = 0;
+        document.getElementById('timerDisplay').innerText = "00:00";
+        document.getElementById('statusLabel').innerText = "Estado: En curso";
+        document.getElementById('statsDetalle').innerText = "";
+        document.getElementById('btnValidar').classList.remove('hidden');
+
+        // Mezclar y seleccionar 15
+        const pool = [...bancoPreguntasPAT].sort(() => Math.random() - 0.5);
+        seleccion = pool.slice(0, 15);
+
+        renderNav();
+        renderPreguntas();
+        startCrono();
+    }
+
+    function renderNav() {
+        const nav = document.getElementById('navGrid');
+        nav.innerHTML = '';
+        seleccion.forEach((_, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'nav-item';
+            btn.id = `nav-i-${i}`;
+            btn.innerText = i + 1;
+            btn.onclick = () => {
+                const el = document.getElementById(`preg-${i}`);
+                if(el) el.scrollIntoView();
+            };
+            nav.appendChild(btn);
+        });
+    }
+
+    function renderPreguntas() {
+        const body = document.getElementById('quizBody');
+        body.innerHTML = '';
+        seleccion.forEach((p, i) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `preg-${i}`;
+            card.innerHTML = `
+                <span style="font-weight:bold; font-size:1.1em; display:block; margin-bottom:10px;">${i+1}. ${p.q}</span>
+                <div id="group-${i}">
+                    ${p.a.map((opt, idx) => `
+                        <label class="option-label" id="lbl-${i}-${idx}">
+                            <input type="radio" name="p${i}" value="${idx}"> ${opt}
+                        </label>
+                    `).join('')}
+                </div>
+                <div class="explanation" id="exp-${i}"><strong>Explicación:</strong> ${p.e}</div>
+                <button class="btn-up" onclick="subir()">▲ Subir</button>
+            `;
+            body.appendChild(card);
+        });
+    }
+
+    function startCrono() {
+        clearInterval(crono);
+        crono = setInterval(() => {
+            segundos++;
+            let m = Math.floor(segundos / 60).toString().padStart(2, '0');
+            let s = (segundos % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function validarExamen() {
+        if(finalizado) return;
+        finalizado = true;
+        clearInterval(crono);
+
+        let a = 0, e = 0, b = 0;
+
+        seleccion.forEach((p, i) => {
+            const marcado = document.querySelector(`input[name="p${i}"]:checked`);
+            const nav = document.getElementById(`nav-i-${i}`);
+            document.getElementById(`exp-${i}`).style.display = 'block';
+            document.querySelectorAll(`input[name="p${i}"]`).forEach(r => r.disabled = true);
+            document.getElementById(`lbl-${i}-${p.c}`).classList.add('border-correct');
+
+            if(!marcado) {
+                b++; nav.classList.add('nav-blank');
+            } else {
+                const res = parseInt(marcado.value);
+                if(res === p.c) { a++; nav.classList.add('nav-correct'); }
+                else { e++; nav.classList.add('nav-wrong'); document.getElementById(`lbl-${i}-${res}`).classList.add('border-wrong'); }
+            }
+        });
+
+        let nota = ((a - (e / 3)) * 10 / 15).toFixed(2);
+        document.getElementById('statusLabel').innerText = `NOTA: ${nota < 0 ? 0 : nota}`;
+        document.getElementById('statsDetalle').innerText = `A: ${a} | E: ${e} | B: ${b}`;
+        document.getElementById('btnValidar').classList.add('hidden');
+        subir();
+    }
+
+    function subir() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // FUNCIÓN DE REINICIO MEJORADA
+    function reiniciar() {
+        // 1. Subir inmediatamente (sin suavizado para que sea instantáneo)
+        window.scrollTo(0, 0);
+        
+        // 2. Un pequeño retraso para que el DOM se limpie mientras estamos arriba
+        setTimeout(() => {
+            iniciarTest();
+        }, 50);
+    }
+
+    window.onload = iniciarTest;
+</script>
+
+</body>
+</html>
