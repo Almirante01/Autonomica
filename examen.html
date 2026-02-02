@@ -30,14 +30,14 @@
         .header-fixed {
             position: fixed; top: 0; left: 0; right: 0;
             background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 2000; padding: 15px 0;
+            z-index: 2000; padding: 20px 0;
         }
 
         .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
 
         .nav-grid {
-            display: grid; grid-template-columns: repeat(15, 1fr);
-            gap: 6px; margin-bottom: 15px;
+            display: grid; grid-template-columns: repeat(20, 1fr);
+            gap: 6px; margin-bottom: 20px;
         }
 
         .nav-item {
@@ -76,17 +76,17 @@
         .border-wrong { border-color: var(--error) !important; background: #fdf2f2 !important; }
 
         .explanation {
-            margin-top: 15px; padding: 15px; background: #eef7fe;
+            margin-top: 20px; padding: 20px; background: #eef7fe;
             border-radius: 6px; display: none; border-left: 4px solid var(--accent);
         }
 
         .btn-main {
-            width: 100%; padding: 15px; background: var(--success);
+            width: 100%; padding: 20px; background: var(--success);
             color: white; border: none; border-radius: 8px;
             font-size: 1.2em; font-weight: bold; cursor: pointer; margin-bottom: 50px;
         }
 
-        .btn-restart { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-restart { background: var(--primary); color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
         .btn-up { background: #eee; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-size: 0.8em; }
         
         .hidden { display: none; }
@@ -126,9 +126,9 @@
         document.getElementById('statsDetalle').innerText = "";
         document.getElementById('btnValidar').classList.remove('hidden');
 
-        // Mezclar y seleccionar 15
+        // Mezclar y seleccionar 20
         const pool = [...bancoPreguntasPAT].sort(() => Math.random() - 0.5);
-        seleccion = pool.slice(0, 15);
+        seleccion = pool.slice(0, 20);
 
         renderNav();
         renderPreguntas();
@@ -207,7 +207,7 @@
             }
         });
 
-        let nota = ((a - (e / 3)) * 10 / 15).toFixed(2);
+        let nota = ((a - (e / 3)) * 10 / 20).toFixed(2);
         document.getElementById('statusLabel').innerText = `NOTA: ${nota < 0 ? 0 : nota}`;
         document.getElementById('statsDetalle').innerText = `A: ${a} | E: ${e} | B: ${b}`;
         document.getElementById('btnValidar').classList.add('hidden');
