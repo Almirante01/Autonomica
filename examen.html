@@ -91,8 +91,26 @@
         
         .hidden { display: none; }
     </style>
+
+<style>
+#pauseOverlay{
+ position:fixed; inset:0; background:rgba(0,0,0,0.85);
+ display:none; align-items:center; justify-content:center;
+ color:#fff; font-size:40px; font-weight:bold; z-index:9999;
+}
+#pauseBtn{
+ position:fixed; top:15px; right:15px; z-index:10000;
+ padding:10px 18px; font-size:16px; border:none;
+ border-radius:8px; background:#222; color:#fff; cursor:pointer;
+}
+</style>
+
 </head>
 <body>
+
+<div id="pauseOverlay">EXAMEN PAUSADO</div>
+<button id="pauseBtn">Pausar</button>
+
 
 <div class="header-fixed" id="mainHeader">
     <div class="container">
@@ -230,6 +248,47 @@
     }
 
     window.onload = iniciarTest;
+</script>
+
+
+<script>
+let paused=false;
+let savedAnswers=[];
+
+function togglePause(){
+ paused=!paused;
+ const overlay=document.getElementById("pauseOverlay");
+ const btn=document.getElementById("pauseBtn");
+
+ if(paused){
+   overlay.style.display="flex";
+   btn.textContent="Reanudar";
+
+   savedAnswers=[];
+   document.querySelectorAll('input[type=radio]').forEach(r=>{
+      if(r.checked){
+         savedAnswers.push({name:r.name,value:r.value});
+         r.checked=false;
+      }
+      r.disabled=true;
+   });
+
+ }else{
+   overlay.style.display="none";
+   btn.textContent="Pausar";
+
+   document.querySelectorAll('input[type=radio]').forEach(r=>r.disabled=false);
+
+   savedAnswers.forEach(a=>{
+     const el=document.querySelector(`input[name="${a.name}"][value="${a.value}"]`);
+     if(el) el.checked=true;
+   });
+ }
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+ document.getElementById("pauseBtn").onclick=togglePause;
+});
 </script>
 
 </body>
