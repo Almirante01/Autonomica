@@ -4453,4 +4453,41 @@ const bancoPreguntasPAT = [
   { id: "EA_038", q: "La misión del GEO incluye situaciones de carácter:", a: ["Administrativo.", "Terrorista o que entrañen grave riesgo.", "Relacionadas con el tráfico rodado.", "Protocolarias."], c: 1, e: "El art. 4.4.c destaca la especial cualificación para situaciones terroristas o de grave riesgo." },
   { id: "EA_039", q: "La Comisaría General de Policía Judicial depende de:", a: ["La Subdirección de Recursos Humanos.", "La Dirección Adjunta Operativa.", "El Ministerio de Justicia.", "La Audiencia Nacional."], c: 1, e: "Depende de la DAO (Art. 4.5)." },
   { id: "EA_040", q: "La Secretaría General de la DAO ejerce funciones de asistencia a:", a: ["El Ministro del Interior.", "La persona titular de la Dirección Adjunta Operativa.", "Todas las Jefaturas Superiores de España.", "La ciudadanía en general."], c: 1, e: "El art. 4.3 especifica que asiste y apoya a la persona titular de la DAO." }
+
 ];
+
+// ===============================
+// 🔀 MEZCLAR RESPUESTAS DINÁMICAMENTE
+// ===============================
+
+function mezclarArrayConIndiceCorrecto(pregunta) {
+    const respuestas = pregunta.a.map((texto, index) => ({
+        texto,
+        correcta: index === pregunta.c
+    }));
+
+    // Fisher-Yates shuffle
+    for (let i = respuestas.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [respuestas[i], respuestas[j]] = [respuestas[j], respuestas[i]];
+    }
+
+    // reconstruir
+    pregunta.a = respuestas.map(r => r.texto);
+    pregunta.c = respuestas.findIndex(r => r.correcta);
+}
+
+// Mezclar todas las preguntas al cargar
+bancoPreguntasPAT.forEach(p => mezclarArrayConIndiceCorrecto(p));
+
+// 🔀 Mezclar orden de preguntas
+function mezclarPreguntas(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+mezclarPreguntas(bancoPreguntasPAT);
+
+
