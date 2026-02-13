@@ -4490,4 +4490,3 @@ function mezclarPreguntas(array) {
 
 mezclarPreguntas(bancoPreguntasPAT);
 
-
